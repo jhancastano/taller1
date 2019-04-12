@@ -9,6 +9,7 @@ import hashlib
 import os
 
 size_parts = 1024*1024
+SERVER_TCP = "tcp://localhost:5555"
 
 
 def npartes(nombreArchivo):
@@ -32,7 +33,7 @@ def descargar(nombreArchivo):
 #  Socket to talk to server
 	print("Connecting to hello world server...")
 	socket = context.socket(zmq.REQ)
-	socket.connect("tcp://localhost:5555")
+	socket.connect(SERVER_TCP)
 
 	socket.send_multipart([b'descarga',nombreArchivo.encode('utf8'),b'0',b'0',b'0',b'descargando'])
 	
@@ -49,10 +50,9 @@ def descargar(nombreArchivo):
     				
 def upload(nombreArchivo):
 	context = zmq.Context()
-#  Socket to talk to server
 	print("Connecting to hello world server...")
 	socket = context.socket(zmq.REQ)
-	socket.connect("tcp://localhost:5555")
+	socket.connect(SERVER_TCP)
 
 	file = open(nombreArchivo,'r+b')
 	nombreCompleto = nombrehash(nombreArchivo)
@@ -64,11 +64,33 @@ def upload(nombreArchivo):
 		opcion, message, part, NPar, NSend, estado = socket.recv_multipart()
 	socket.send_multipart([b'upload',nombreCompleto.encode(),b'0',b'0',b'0',b'complete'])
 	file.close()
+
+def compartir(nombreArchivo):
+	context = zmq.Context()
+	print("Connecting to hello world server...")
+	socket = context.socket(zmq.REQ)
+	socket.connect(SERVER_TCP)
+	socket.send_multipart([b'compartir',nombreArchivo.encode(),b'0',b'0',b'0',b'compartir'])
+	opcion, message, part, NPart, NSend, estado = socket.recv_multipart()
     
 
+def compartidos():
+	context = zmq.Context()
+	print("Connecting to hello world server...")
+	socket = context.socket(zmq.REQ)
+	socket.connect(SERVER_TCP)
+	socket.send_multipart([b'compartidos',b'0',b'0',b'0',b'0',b'compartidos'])
+	opcion, message, part, NPart, NSend, estado = socket.recv_multipart()
+	print(part)
+	print('holaprueba')
+
+
+compartir('holamundo.com')
+#compartir('prueba.txt')
+compartidos()
 
 #descargar('prueba.png')
-upload('pruebaupload.png')
+#upload('pruebaupload.png')
 
 
 

@@ -11,6 +11,9 @@ import os
 
 
 size_parts = 1024*1024
+SERVER_TCP = "tcp://localhost:5555"
+
+listacompartidos = []
 
 def npartes(nombreArchivo):
     size = os.stat(nombreArchivo).st_size
@@ -61,6 +64,18 @@ def upload(nombreArchivo,part,NPart,NSend,estado):
     socket.send_multipart([b'upload',nombreArchivo,part,NPart,NSend,b'complete'])
     copia.close()
 
+
+def compartir(nombreArchivo):
+    listacompartidos.append(nombreArchivo)
+    socket.send_multipart([b'compartir',b'archivo Compartido',b'0',b'0',b'0',b'complete'])
+    
+
+def compartidos():
+    #list1 = ''.join(listacompartidos)
+    socket.send_multipart([b'compartidos',b'listacompartidos',str(listacompartidos).encode(),b'2',b'3',b'complete'])
+
+
+
 context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5555")
@@ -73,6 +88,10 @@ while True:
         descargar(message)
     if (opcion==b'upload'):
         upload(message,part,NPart,NSend,estado)
+    if (opcion==b'compartir'):
+        compartir(message)
+    if (opcion==b'compartidos'):
+        compartidos()
 
 
     
