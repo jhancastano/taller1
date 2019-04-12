@@ -10,80 +10,71 @@ import hashlib
 import os
 
 
-size_parts = 1024*1024*20
+size_parts = 1024*1024
 
-objetohash = hashlib.sha1(b'hola mundo')
-cadena = objetohash.hexdigest()
-extension = os.path.splitext('fuente.textClipping')[1]
-print(cadena + extension)
+def npartes(nombreArchivo):
+    size = os.stat(nombreArchivo).st_size
+    partes = size/size_parts
+    return partes
 
-a, b, c = ['1','2','3']
-print(b)
+
 def copiarArchivo(nombreArchivo):
     size = os.stat(nombreArchivo).st_size
     exten = os.path.splitext(nombreArchivo)[1]
-
-
     file = open(nombreArchivo,'r+b')
     hashname = hashlib.sha1(b'hola mundo')
     nombre = hashname.hexdigest()
-
-
-
     copia = open(nombre + exten,'w+b')
     for x in range(1,20):
         part = file.read(size_parts)
         copia.write(part)
-        
     file.close()
     copia.close()
     sizecopia = os.stat(nombreArchivo).st_size
-    
-
-    print(size)
-    print('copia')
-    print(sizecopia)
 
 def descargar(nombreArchivo):
-    print('descargar')
-    hola = message
-    print(message)
+    print('descargando')
     file = open(nombreArchivo,'r+b')
-    part = file.read(size_parts)
-
-    socket.send_multipart([message,part,b"hola"])
-    pass
+    NParte = int(npartes(nombreArchivo))
+    print(NParte)
+    for x in range(0,NParte+1):
+        part = file.read(size_parts)
+        socket.send_multipart([b'descargando',nombreArchivo,part,str(NParte).encode(),str(x).encode(),b'descargando'])
+        opcion, message, part, NPar, NSend, estado = socket.recv_multipart()
+        if(estado == b'descargado'):
+            socket.send_multipart([b'descargado',nombreArchivo,b'0',b'0',b'0',b'complete'])
+            break
+    socket.send_multipart([b'descargado',nombreArchivo,b'0',b'0',b'0',b'complete'])
+    file.close()
     
-def upload(nombreArchivo):
+    
+def upload(nombreArchivo,part,NPart,NSend,estado):
+    
     copia = open(nombreArchivo,'w+b')
-    copia.write(part)
+    while (int(NPart.decode()) >= int(NSend.decode())):
+        copia.write(part)
+        socket.send_multipart([b'upload',nombreArchivo,part,NPart,NSend,b'upload'])
+        opcion, message, part, NPart, NSend, estado = socket.recv_multipart()
+        if (estado==b'complete'):
+            break
+    pass
+    socket.send_multipart([b'upload',nombreArchivo,part,NPart,NSend,b'complete'])
     copia.close()
-    socket.send_multipart([b'0',b'0',b"0"])
-    
-    pass   
-
-
-#copiarArchivo('prueba.png')
 
 context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://*:5555")
 
 while True:
-#  copiarArchivo('prueba.gif')
-#     #  Wait for next request from client
-    opcion, message, part = socket.recv_multipart()
-    print("Received request: hola" )
+    opcion, message, part, NPart, NSend, estado = socket.recv_multipart()
+    print("go server" )
 
     if (opcion==b'descarga'):
         descargar(message)
     if (opcion==b'upload'):
-        upload(message)
+        upload(message,part,NPart,NSend,estado)
 
-#     #  Do some 'work'
-#     time.sleep(1)
 
-#     #  Send reply back to client
     
     
 
