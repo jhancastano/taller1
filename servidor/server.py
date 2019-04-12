@@ -10,7 +10,7 @@ import hashlib
 import os
 
 
-size_parts = 1024*1024
+size_parts = 20*1024*1024
 SERVER_TCP = "tcp://localhost:5555"
 
 listacompartidos = []
